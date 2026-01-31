@@ -1,26 +1,72 @@
-// Add this new helper function inside your <script> tag
-function fractionToDecimal(str) {
-    if (str.includes('/')) {
-        const parts = str.split('/');
-        return parseFloat(parts[0]) / parseFloat(parts[1]);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Digital Cookbook</title>
+    <style>
+        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #f4f7f6; --danger: #e74c3c; --info: #3498db; --warning: #f39c12; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gray); color: var(--dark); padding-bottom: 50px; }
+        .container { width: 95%; max-width: 600px; margin: 20px auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-scale { background: #eee; color: #444; padding: 5px 10px; font-size: 0.8rem; margin: 2px; }
+        .active-scale { background: var(--info); color: white; }
+        .recipe-item { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--primary); }
+        .recipe-header { display: flex; justify-content: space-between; align-items: center; }
+        .instructions-panel { display: none; margin-top: 15px; padding: 10px; background: #fffdf2; border-radius: 4px; border-top: 1px dashed #ddd; }
+        .grocery-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .tag { font-size: 0.7em; background: #e8f5e9; color: #2e7d32; padding: 3px 8px; border-radius: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2 id="formTitle">📝 New Recipe</h2>
+        <input type="hidden" id="editId">
+        <input type="text" id="recipeName" placeholder="Recipe Name">
+        <textarea id="ingredientsInput" rows="3" placeholder="Ingredients (e.g. 1/2 cup Sugar, Pantry)"></textarea>
+        <textarea id="howToInput" rows="2" placeholder="Instructions..."></textarea>
+        <button id="saveBtn" style="width: 100%" onclick="saveRecipe()">Save Recipe</button>
+        <button id="cancelBtn" style="width: 100%; background: #95a5a6; margin-top: 5px; display: none;" onclick="cancelEdit()">Cancel Edit</button>
+    </div>
+
+    <div class="card">
+        <h2>👨‍🍳 My Cookbook</h2>
+        <input type="text" id="searchInput" placeholder="🔍 Search recipes..." onkeyup="render()" style="border: 2px solid var(--primary);">
+        <div id="recipeList" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="card">
+        <h2>🛒 Shopping List</h2>
+        <div id="shoppingList"></div>
+        <button style="width: 100%; background: #95a5a6; margin-top: 10px;" onclick="clearGroceryList()">Clear All</button>
+    </div>
+</div>
+
+<script>
+    let recipes = JSON.parse(localStorage.getItem('myRecipes')) || [];
+    let groceryList = JSON.parse(localStorage.getItem('myGroceries')) || [];
+
+    // NEW: Helper to convert "1/2" to 0.5
+    function parseNumeric(val) {
+        if (val.includes('/')) {
+            const [num, den] = val.split('/');
+            return parseFloat(num) / parseFloat(den);
+        }
+        return parseFloat(val);
     }
-    return parseFloat(str);
-}
 
-// And update the scaleIngredient function to use it
-function scaleIngredient(text, factor) {
-    // This regex now looks for fractions like 1/2 or 3/4
-    const regex = /(\d+(?:\/\d+)?(?:\.\d+)?)\s*(tsp|tbsp|cup|cups|oz|lb|lbs|g|ml)\b/gi;
-    
-    return text.replace(regex, (match, val, unit) => {
-        let decimalValue = fractionToDecimal(val);
-        let total = decimalValue * factor;
-        unit = unit.toLowerCase();
-
-        // Standard conversions
-        if (unit === "tsp" && total >= 3) { total /= 3; unit = "tbsp"; }
-        if (unit === "tbsp" && total >= 16) { total /= 16; unit = "cups"; }
+    function scaleIngredient(text, factor) {
+        // Updated Regex to catch fractions like 1/2 or 3/4
+        const regex = /((?:\d+\/\d+|\d+(?:\.\d+)?))\s*(tsp|tbsp|cup|cups|oz|lb|lbs|g|ml)\b/gi;
         
-        return `${+total.toFixed(2)} ${unit}`;
-    });
-}
+        return text.replace(regex, (match, val, unit) => {
+            let total = parseNumeric(val) * factor;
+            unit = unit.toLowerCase();
+
+            // Conversions
+            if (unit === "tsp" && total >= 3) { total /= 3; unit = "tbsp"; }
+            if (unit === "tbsp" && total >= 16)
