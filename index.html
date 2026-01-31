@@ -3,39 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe & Grocery Pro</title>
+    <title>My Digital Cookbook</title>
     <style>
-        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #ecf0f1; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gray); display: flex; flex-direction: column; align-items: center; }
-        .container { width: 90%; max-width: 600px; margin-top: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        button.secondary { background: var(--dark); margin-top: 5px; }
-        .recipe-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; }
-        .grocery-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
-        .tag { font-size: 0.7em; background: #eee; padding: 2px 6px; border-radius: 4px; color: #666; }
+        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--gray); color: var(--dark); padding-bottom: 50px; }
+        .container { width: 95%; max-width: 600px; margin: 20px auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        .btn-view { background: #3498db; margin-right: 5px; }
+        .btn-add { background: var(--primary); }
+
+        .recipe-item { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; border-left: 5px solid var(--primary); }
+        .recipe-header { display: flex; justify-content: space-between; align-items: center; }
+        .instructions-panel { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd; background: #fffdf2; padding: 10px; border-radius: 4px; }
+        
+        .grocery-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .tag { font-size: 0.7em; background: #e8f5e9; color: #2e7d32; padding: 3px 8px; border-radius: 12px; }
+        h2 { margin-top: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2>Add New Recipe</h2>
-        <input type="text" id="recipeName" placeholder="Recipe Name (e.g., Pesto Pasta)">
-        <textarea id="ingredientsInput" placeholder="Ingredients (one per line). Format: Item, Category&#10;Example: Basil, Produce"></textarea>
-        <button onclick="saveRecipe()">Save Recipe</button>
+        <h2>📝 Add New Recipe</h2>
+        <input type="text" id="recipeName" placeholder="Recipe Name (e.g. Spaghetti)">
+        <textarea id="ingredientsInput" rows="3" placeholder="Ingredients (Item, Category)&#10;Pasta, Pantry&#10;Sauce, Canned"></textarea>
+        <textarea id="howToInput" rows="4" placeholder="How to make it...&#10;1. Boil water&#10;2. Add pasta..."></textarea>
+        <button style="width: 100%" onclick="saveRecipe()">Save to Cookbook</button>
     </div>
 
     <div class="card">
-        <h2>My Recipes</h2>
+        <h2>👨‍🍳 My Cookbook</h2>
         <div id="recipeList"></div>
     </div>
 
-    <div class="card" style="border-top: 5px solid var(--primary);">
-        <h2>Shopping List</h2>
+    <div class="card">
+        <h2>🛒 Shopping List</h2>
         <div id="shoppingList"></div>
-        <button class="secondary" onclick="clearGroceryList()">Clear Shopping List</button>
+        <button style="width: 100%; background: #95a5a6; margin-top: 10px;" onclick="clearGroceryList()">Clear List</button>
     </div>
 </div>
 
@@ -46,21 +55,28 @@
     function saveRecipe() {
         const name = document.getElementById('recipeName').value;
         const rawIngredients = document.getElementById('ingredientsInput').value.split('\n');
+        const howTo = document.getElementById('howToInput').value;
         
-        if(!name || rawIngredients[0] === "") return alert("Please fill in the name and ingredients!");
+        if(!name || !howTo) return alert("Please fill in the name and instructions!");
 
-        const ingredients = rawIngredients.map(line => {
+        const ingredients = rawIngredients.filter(line => line.trim() !== "").map(line => {
             const [item, aisle] = line.split(',');
             return { item: item.trim(), aisle: (aisle || 'General').trim() };
         });
 
-        recipes.push({ id: Date.now(), name, ingredients });
+        recipes.push({ id: Date.now(), name, ingredients, howTo });
         localStorage.setItem('myRecipes', JSON.stringify(recipes));
         
-        // Reset form
+        // Clear inputs
         document.getElementById('recipeName').value = '';
         document.getElementById('ingredientsInput').value = '';
+        document.getElementById('howToInput').value = '';
         render();
+    }
+
+    function toggleInstructions(id) {
+        const panel = document.getElementById(`instr-${id}`);
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
     }
 
     function addToCart(recipeId) {
@@ -71,22 +87,31 @@
     }
 
     function clearGroceryList() {
-        groceryList = [];
-        localStorage.setItem('myGroceries', JSON.stringify(groceryList));
-        render();
+        if(confirm("Clear your entire shopping list?")) {
+            groceryList = [];
+            localStorage.setItem('myGroceries', JSON.stringify(groceryList));
+            render();
+        }
     }
 
     function render() {
-        // Render Recipes
         const recipeDiv = document.getElementById('recipeList');
         recipeDiv.innerHTML = recipes.map(r => `
             <div class="recipe-item">
-                <span>${r.name}</span>
-                <button style="width:auto; padding: 5px 10px;" onclick="addToCart(${r.id})">+ Add to List</button>
+                <div class="recipe-header">
+                    <strong>${r.name}</strong>
+                    <div>
+                        <button class="btn-view" onclick="toggleInstructions(${r.id})">Steps</button>
+                        <button class="btn-add" onclick="addToCart(${r.id})">🛒</button>
+                    </div>
+                </div>
+                <div class="instructions-panel" id="instr-${r.id}">
+                    <strong>Instructions:</strong><br>
+                    <p style="white-space: pre-wrap; font-size: 0.9em;">${r.howTo}</p>
+                </div>
             </div>
         `).join('');
 
-        // Render Grocery List (Sorted by Aisle)
         const groceryDiv = document.getElementById('shoppingList');
         groceryList.sort((a, b) => a.aisle.localeCompare(b.aisle));
         groceryDiv.innerHTML = groceryList.map(ing => `
@@ -98,7 +123,6 @@
         `).join('');
     }
 
-    // Initial Load
     render();
 </script>
 
