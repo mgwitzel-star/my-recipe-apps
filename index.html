@@ -10,23 +10,24 @@
         .container { max-width: 650px; margin: 0 auto; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* Badges & Scaling */
+        /* Badges & Styling */
         .aisle-badge { font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; color: white; font-weight: bold; text-transform: uppercase; margin-left: 8px; }
         .aisle-produce { background: #27ae60; } .aisle-meat { background: #e74c3c; } .aisle-dairy { background: #3498db; }
         .aisle-pantry { background: #f39c12; } .aisle-frozen { background: #9b59b6; } .aisle-general { background: #95a5a6; }
         .active-scale { background: var(--primary) !important; color: white !important; }
 
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { background: var(--primary); color: white; border: none; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         button:active { transform: scale(0.96); }
 
-        .day-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-        .day-name { font-weight: bold; width: 45px; }
-        .day-recipe { flex-grow: 1; color: var(--blue); padding-left: 10px; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* FIXED PLANNER STYLING */
+        .day-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .day-label { font-weight: bold; width: 60px; color: var(--dark); }
+        .day-content { flex-grow: 1; color: var(--blue); font-style: italic; padding: 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-plan { background: var(--blue); padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; }
 
         .recipe-row { display: flex; gap: 15px; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
         .thumb { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: #eee; flex-shrink: 0; border: 1px solid #ddd; }
-        
         .grocery-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
         .price-input { width: 75px !important; margin: 0 !important; padding: 5px !important; text-align: right; }
         .budget-bar { background: var(--dark); color: white; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
@@ -36,27 +37,16 @@
 
 <div class="container">
     <div class="budget-bar">
-        <span>Estimated Budget</span>
+        <span>Weekly Budget</span>
         <span id="totalPrice" style="font-size: 1.6rem; font-weight: bold;">$0.00</span>
     </div>
 
-    <div class="card">
-        <h2>📅 Weekly Planner</h2>
-        <div id="planner"></div>
-        <button style="width: 100%; margin-top: 15px; background: var(--dark);" onclick="syncPlanToGroceries()">🛒 Add Plan to Shopping List</button>
+    <div class="card" style="border-top: 5px solid var(--blue);">
+        <h2 style="color: var(--blue);">📅 Weekly Meal Plan</h2>
+        <div id="planner">
+            </div>
+        <button style="width: 100%; margin-top: 15px; background: var(--dark);" onclick="syncPlanToGroceries()">🛒 Sync All Meals to Grocery List</button>
     </div>
 
     <div class="card" style="border: 2px solid var(--accent);">
         <h2 style="color: var(--accent);">⚡ Quick Add from Web</h2>
-        <input type="text" id="urlInput" placeholder="Paste recipe URL here (e.g. AllRecipes)">
-        <button id="scrapeBtn" style="background: var(--accent); width: 100%;" onclick="scrapeRecipe()">Fetch Recipe Data</button>
-    </div>
-
-    <div class="card">
-        <h2 id="formTitle">📝 Recipe Editor</h2>
-        <input type="hidden" id="editId">
-        <input type="text" id="recipeName" placeholder="Recipe Name">
-        <input type="text" id="recipeImg" placeholder="Image URL (Optional)">
-        <textarea id="ingredientsInput" rows="4" placeholder="Ingredients (e.g. 1/2 cup Milk, Dairy)"></textarea>
-        <textarea id="howToInput" rows="2" placeholder="Instructions..."></textarea>
-        <button style="width: 100%" onclick="saveRecipe()">Save to Cookbook</button>
