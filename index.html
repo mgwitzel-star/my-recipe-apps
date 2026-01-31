@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe & Grocery Pro</title>
+    <style>
+        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #ecf0f1; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gray); display: flex; flex-direction: column; align-items: center; }
+        .container { width: 90%; max-width: 600px; margin-top: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button.secondary { background: var(--dark); margin-top: 5px; }
+        .recipe-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; }
+        .grocery-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
+        .tag { font-size: 0.7em; background: #eee; padding: 2px 6px; border-radius: 4px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>Add New Recipe</h2>
+        <input type="text" id="recipeName" placeholder="Recipe Name (e.g., Pesto Pasta)">
+        <textarea id="ingredientsInput" placeholder="Ingredients (one per line). Format: Item, Category&#10;Example: Basil, Produce"></textarea>
+        <button onclick="saveRecipe()">Save Recipe</button>
+    </div>
+
+    <div class="card">
+        <h2>My Recipes</h2>
+        <div id="recipeList"></div>
+    </div>
+
+    <div class="card" style="border-top: 5px solid var(--primary);">
+        <h2>Shopping List</h2>
+        <div id="shoppingList"></div>
+        <button class="secondary" onclick="clearGroceryList()">Clear Shopping List</button>
+    </div>
+</div>
+
+<script>
+    let recipes = JSON.parse(localStorage.getItem('myRecipes')) || [];
+    let groceryList = JSON.parse(localStorage.getItem('myGroceries')) || [];
+
+    function saveRecipe() {
+        const name = document.getElementById('recipeName').value;
+        const rawIngredients = document.getElementById('ingredientsInput').value.split('\n');
+        
+        if(!name || rawIngredients[0] === "") return alert("Please fill in the name and ingredients!");
+
+        const ingredients = rawIngredients.map(line => {
+            const [item, aisle] = line.split(',');
+            return { item: item.trim(), aisle: (aisle || 'General').trim() };
+        });
+
+        recipes.push({ id: Date.now(), name, ingredients });
+        localStorage.setItem('myRecipes', JSON.stringify(recipes));
+        
+        // Reset form
+        document.getElementById('recipeName').value = '';
+        document.getElementById('ingredientsInput').value = '';
+        render();
+    }
+
+    function addToCart(recipeId) {
+        const recipe = recipes.find(r => r.id === recipeId);
+        groceryList = [...groceryList, ...recipe.ingredients];
+        localStorage.setItem('myGroceries', JSON.stringify(groceryList));
+        render();
+    }
+
+    function clearGroceryList() {
+        groceryList = [];
+        localStorage.setItem('myGroceries', JSON.stringify(groceryList));
+        render();
+    }
+
+    function render() {
+        // Render Recipes
+        const recipeDiv = document.getElementById('recipeList');
+        recipeDiv.innerHTML = recipes.map(r => `
+            <div class="recipe-item">
+                <span>${r.name}</span>
+                <button style="width:auto; padding: 5px 10px;" onclick="addToCart(${r.id})">+ Add to List</button>
+            </div>
+        `).join('');
+
+        // Render Grocery List (Sorted by Aisle)
+        const groceryDiv = document.getElementById('shoppingList');
+        groceryList.sort((a, b) => a.aisle.localeCompare(b.aisle));
+        groceryDiv.innerHTML = groceryList.map(ing => `
+            <div class="grocery-item">
+                <input type="checkbox">
+                <span>${ing.item}</span>
+                <span class="tag">${ing.aisle}</span>
+            </div>
+        `).join('');
+    }
+
+    // Initial Load
+    render();
+</script>
+
+</body>
+</html>
