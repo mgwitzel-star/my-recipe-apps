@@ -35,8 +35,9 @@
 
     <div class="card">
         <h2>👨‍🍳 My Cookbook</h2>
-        <input type="text" id="searchInput" placeholder="🔍 Search recipes..." onkeyup="render()" style="border: 2px solid var(--primary);">
-        <div id="recipeList" style="margin-top:15px;"></div>
+        <input type="text" id="searchInput" placeholder="🔍 Search recipes..." onkeyup="render()" style="border: 2px solid var(--primary); margin-bottom: 10px;">
+        <button style="background: var(--info); width: 100%; margin-bottom: 10px;" onclick="pickRandom()">🎲 Random Dinner Picker</button>
+        <div id="recipeList"></div>
     </div>
 
     <div class="card">
@@ -50,8 +51,9 @@
     let recipes = JSON.parse(localStorage.getItem('myRecipes')) || [];
     let groceryList = JSON.parse(localStorage.getItem('myGroceries')) || [];
 
-    // NEW: Helper to convert "1/2" to 0.5
+    // Math Helpers
     function parseNumeric(val) {
+        if (!val) return 0;
         if (val.includes('/')) {
             const [num, den] = val.split('/');
             return parseFloat(num) / parseFloat(den);
@@ -60,13 +62,20 @@
     }
 
     function scaleIngredient(text, factor) {
-        // Updated Regex to catch fractions like 1/2 or 3/4
         const regex = /((?:\d+\/\d+|\d+(?:\.\d+)?))\s*(tsp|tbsp|cup|cups|oz|lb|lbs|g|ml)\b/gi;
-        
         return text.replace(regex, (match, val, unit) => {
             let total = parseNumeric(val) * factor;
             unit = unit.toLowerCase();
-
-            // Conversions
             if (unit === "tsp" && total >= 3) { total /= 3; unit = "tbsp"; }
-            if (unit === "tbsp" && total >= 16)
+            if (unit === "tbsp" && total >= 16) { total /= 16; unit = (total === 1) ? "cup" : "cups"; }
+            if (unit === "oz" && total >= 16) { total /= 16; unit = (total === 1) ? "lb" : "lbs"; }
+            return `${+total.toFixed(2)} ${unit}`;
+        });
+    }
+
+    // Core Logic
+    function saveRecipe() {
+        const name = document.getElementById('recipeName').value;
+        const rawIngs = document.getElementById('ingredientsInput').value.split('\n');
+        const howTo = document.getElementById('howToInput').value;
+        const editId = document.getElementById('editId').value;
