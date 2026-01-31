@@ -5,48 +5,137 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smart Kitchen Pro</title>
     <style>
-        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #f4f7f6; --accent: #9b59b6; --blue: #3498db; --warning: #f39c12; --danger: #e74c3c; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--gray); color: var(--dark); padding: 15px; padding-bottom: 50px; }
-        .container { max-width: 650px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #f4f7f6; --blue: #3498db; --red: #e74c3c; --purple: #9b59b6; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--gray); padding: 10px; padding-bottom: 50px; }
+        .container { max-width: 500px; margin: 0 auto; }
         
-        /* Badges & Styling */
-        .aisle-badge { font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; color: white; font-weight: bold; text-transform: uppercase; margin-left: 8px; }
-        .aisle-produce { background: #27ae60; } .aisle-meat { background: #e74c3c; } .aisle-dairy { background: #3498db; }
-        .aisle-pantry { background: #f39c12; } .aisle-frozen { background: #9b59b6; } .aisle-general { background: #95a5a6; }
-        .active-scale { background: var(--primary) !important; color: white !important; }
+        /* Unified Card Style */
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { margin-top: 0; font-size: 1.1rem; color: var(--dark); border-bottom: 2px solid #eee; padding-bottom: 8px; }
 
-        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { background: var(--primary); color: white; border: none; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.96); }
+        /* Form Elements */
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+        .btn-main { background: var(--primary); width: 100%; }
+        .btn-blue { background: var(--blue); }
+        .btn-red { background: var(--red); padding: 5px 10px; font-size: 0.8rem; }
+        .btn-outline { background: white; border: 2px solid var(--blue); color: var(--blue); padding: 5px 10px; font-size: 0.8rem; }
 
-        /* FIXED PLANNER STYLING */
-        .day-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .day-label { font-weight: bold; width: 60px; color: var(--dark); }
-        .day-content { flex-grow: 1; color: var(--blue); font-style: italic; padding: 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .btn-plan { background: var(--blue); padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; }
+        /* Calendar Styling */
+        .day-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .day-label { font-weight: bold; width: 50px; }
+        .day-meal { flex-grow: 1; color: var(--blue); font-style: italic; padding: 0 10px; }
 
-        .recipe-row { display: flex; gap: 15px; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
-        .thumb { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: #eee; flex-shrink: 0; border: 1px solid #ddd; }
-        .grocery-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .price-input { width: 75px !important; margin: 0 !important; padding: 5px !important; text-align: right; }
-        .budget-bar { background: var(--dark); color: white; padding: 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        /* Recipe Row */
+        .recipe-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .recipe-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #ddd; }
+        .recipe-info { flex-grow: 1; }
+
+        /* Grocery List */
+        .grocery-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .aisle-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: #eee; text-transform: uppercase; }
+
+        .budget-bar { background: var(--dark); color: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; position: sticky; top: 5px; z-index: 100; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="budget-bar">
-        <span>Weekly Budget</span>
-        <span id="totalPrice" style="font-size: 1.6rem; font-weight: bold;">$0.00</span>
+        <span>Estimated Total</span>
+        <span id="budgetDisplay" style="font-size: 1.4rem;">$0.00</span>
     </div>
 
-    <div class="card" style="border-top: 5px solid var(--blue);">
-        <h2 style="color: var(--blue);">📅 Weekly Meal Plan</h2>
-        <div id="planner">
-            </div>
-        <button style="width: 100%; margin-top: 15px; background: var(--dark);" onclick="syncPlanToGroceries()">🛒 Sync All Meals to Grocery List</button>
+    <div class="card">
+        <h2>📅 Weekly Plan</h2>
+        <div id="calendar-area"></div>
+        <button class="btn-main" style="background: var(--dark); margin-top: 10px;" onclick="syncPlan()">🛒 Add Week to Grocery List</button>
     </div>
 
-    <div class="card" style="border: 2px solid var(--accent);">
-        <h2 style="color: var(--accent);">⚡ Quick Add from Web</h2>
+    <div class="card">
+        <h2 id="formTitle">📝 Recipe Editor</h2>
+        <input type="hidden" id="editId">
+        <input type="text" id="name" placeholder="Recipe Name (e.g. Pasta)">
+        <input type="text" id="img" placeholder="Image URL (Optional)">
+        <textarea id="ings" rows="4" placeholder="Ingredients (e.g. 1 cup Milk, Dairy) - One per line"></textarea>
+        <button class="btn-main" onclick="saveRecipe()">Save to Cookbook</button>
+    </div>
+
+    <div class="card">
+        <h2>👨‍🍳 My Cookbook</h2>
+        <div id="recipe-area"></div>
+    </div>
+
+    <div class="card">
+        <h2>🛒 Shopping List</h2>
+        <div id="grocery-area"></div>
+        <button class="btn-main" style="background: #95a5a6; margin-top: 15px;" onclick="clearGroceries()">Clear All</button>
+    </div>
+</div>
+
+<script>
+    // --- DATABASE ---
+    let recipes = JSON.parse(localStorage.getItem('ck_recipes')) || [];
+    let plan = JSON.parse(localStorage.getItem('ck_plan')) || { Mon:"", Tue:"", Wed:"", Thu:"", Fri:"", Sat:"", Sun:"" };
+    let groceries = JSON.parse(localStorage.getItem('ck_groceries')) || [];
+    let prices = JSON.parse(localStorage.getItem('ck_prices')) || {};
+
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    // --- MATH ENGINE ---
+    function scale(text, factor) {
+        return text.replace(/((?:\d+\/\d+|\d+(?:\.\d+)?))/g, (match) => {
+            let num = match.includes('/') ? (match.split('/')[0] / match.split('/')[1]) : parseFloat(match);
+            return +(num * factor).toFixed(2);
+        });
+    }
+
+    // --- CORE ACTIONS ---
+    function saveRecipe() {
+        const name = document.getElementById('name').value.trim();
+        const img = document.getElementById('img').value.trim();
+        const ingRaw = document.getElementById('ings').value.split('\n').filter(l => l.trim() !== "");
+        const id = document.getElementById('editId').value;
+
+        if (!name) return alert("Please enter a name");
+
+        const recipeData = {
+            id: id ? parseInt(id) : Date.now(),
+            name,
+            img,
+            ingredients: ingRaw.map(l => {
+                const parts = l.split(',');
+                return { item: parts[0].trim(), aisle: (parts[1] || 'general').trim().toLowerCase() };
+            }),
+            scale: 1
+        };
+
+        if (id) {
+            const idx = recipes.findIndex(r => r.id == id);
+            recipes[idx] = recipeData;
+        } else {
+            recipes.push(recipeData);
+        }
+
+        localStorage.setItem('ck_recipes', JSON.stringify(recipes));
+        resetForm();
+        render();
+    }
+
+    function setDay(day) {
+        if (recipes.length === 0) return alert("Save a recipe first!");
+        const options = recipes.map(r => r.name).join(", ");
+        const choice = prompt(`What's for ${day}?\nChoices: ${options}`);
+        if (choice !== null) {
+            plan[day] = choice;
+            localStorage.setItem('ck_plan', JSON.stringify(plan));
+            render();
+        }
+    }
+
+    function syncPlan() {
+        days.forEach(d => {
+            if (plan[d]) {
+                const r = recipes.find(rec => rec.name.toLowerCase() === plan[d].toLowerCase());
+                if (r) r.ingredients.forEach(i => groceries.push({ item: scale(i.item, r.scale),
