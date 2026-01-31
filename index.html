@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Digital Cookbook</title>
     <style>
-        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #f4f7f6; --danger: #e74c3c; }
+        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #f4f7f6; --danger: #e74c3c; --info: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gray); color: var(--dark); padding-bottom: 50px; }
         .container { width: 95%; max-width: 600px; margin: 20px auto; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
@@ -13,14 +13,15 @@
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-delete { background: none; color: var(--danger); font-size: 1.2rem; padding: 0 10px; }
-        .btn-view { background: #3498db; margin-right: 5px; }
+        .btn-scale { background: #eee; color: #444; padding: 5px 10px; font-size: 0.8rem; margin: 2px; }
+        .active-scale { background: var(--info); color: white; }
         
         .recipe-item { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--primary); }
         .recipe-header { display: flex; justify-content: space-between; align-items: center; }
+        .scaling-controls { margin: 10px 0; display: flex; align-items: center; gap: 5px; font-size: 0.8rem; }
         .instructions-panel { display: none; margin-top: 15px; padding: 10px; background: #fffdf2; border-radius: 4px; border-top: 1px dashed #ddd; }
         
         .grocery-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .item-left { display: flex; align-items: center; gap: 10px; }
         .tag { font-size: 0.7em; background: #e8f5e9; color: #2e7d32; padding: 3px 8px; border-radius: 12px; }
     </style>
 </head>
@@ -30,7 +31,7 @@
     <div class="card">
         <h2>📝 New Recipe</h2>
         <input type="text" id="recipeName" placeholder="Recipe Name">
-        <textarea id="ingredientsInput" rows="3" placeholder="Ingredients (Item, Category)"></textarea>
+        <textarea id="ingredientsInput" rows="3" placeholder="Ingredients (e.g. 2 Eggs, Dairy)"></textarea>
         <textarea id="howToInput" rows="3" placeholder="Instructions..."></textarea>
         <button style="width: 100%" onclick="saveRecipe()">Save Recipe</button>
     </div>
@@ -55,22 +56,46 @@
         const name = document.getElementById('recipeName').value;
         const rawIngs = document.getElementById('ingredientsInput').value.split('\n');
         const howTo = document.getElementById('howToInput').value;
-        
-        if(!name) return alert("Give your recipe a name!");
+        if(!name) return alert("Name required!");
 
         const ingredients = rawIngs.filter(l => l.trim() !== "").map(l => {
             const [item, aisle] = l.split(',');
-            return { id: Date.now() + Math.random(), item: item.trim(), aisle: (aisle || 'General').trim() };
+            return { item: item.trim(), aisle: (aisle || 'General').trim() };
         });
 
-        recipes.push({ id: Date.now(), name, ingredients, howTo });
+        recipes.push({ id: Date.now(), name, ingredients, howTo, currentScale: 1 });
         localStorage.setItem('myRecipes', JSON.stringify(recipes));
         document.querySelectorAll('input, textarea').forEach(i => i.value = '');
         render();
     }
 
+    function setScale(recipeId, factor) {
+        const recipe = recipes.find(r => r.id === recipeId);
+        recipe.currentScale = factor;
+        render();
+    }
+
+    function scaleText(text, factor) {
+        return text.replace(/(\d+(\.\d+)?)/g, (match) => {
+            return (parseFloat(match) * factor).toFixed(1).replace(/\.0$/, '');
+        });
+    }
+
+    function addToCart(recipeId) {
+        const recipe = recipes.find(r => r.id === recipeId);
+        const factor = recipe.currentScale || 1;
+        const scaledItems = recipe.ingredients.map(ing => ({
+            id: Date.now() + Math.random(),
+            item: scaleText(ing.item, factor),
+            aisle: ing.aisle
+        }));
+        groceryList = [...groceryList, ...scaledItems];
+        localStorage.setItem('myGroceries', JSON.stringify(groceryList));
+        render();
+    }
+
     function deleteRecipe(id) {
-        if(confirm("Delete this recipe forever?")) {
+        if(confirm("Delete recipe?")) {
             recipes = recipes.filter(r => r.id !== id);
             localStorage.setItem('myRecipes', JSON.stringify(recipes));
             render();
@@ -83,29 +108,41 @@
         render();
     }
 
-    function toggleInstructions(id) {
-        const p = document.getElementById(`instr-${id}`);
-        p.style.display = p.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function addToCart(recipeId) {
-        const recipe = recipes.find(r => r.id === recipeId);
-        // Give each item a unique ID so we can delete them individually
-        const itemsWithIds = recipe.ingredients.map(ing => ({...ing, id: Date.now() + Math.random()}));
-        groceryList = [...groceryList, ...itemsWithIds];
-        localStorage.setItem('myGroceries', JSON.stringify(groceryList));
-        render();
-    }
-
-    function clearGroceryList() {
-        if(confirm("Empty your shopping list?")) {
-            groceryList = [];
-            localStorage.setItem('myGroceries', JSON.stringify(groceryList));
-            render();
-        }
-    }
-
     function render() {
         document.getElementById('recipeList').innerHTML = recipes.map(r => `
             <div class="recipe-item">
-                <div class="recipe-header
+                <div class="recipe-header">
+                    <strong>${r.name}</strong>
+                    <div>
+                        <button style="background:#3498db" onclick="toggleInstr(${r.id})">Steps</button>
+                        <button onclick="addToCart(${r.id})">🛒</button>
+                        <button class="btn-delete" onclick="deleteRecipe(${r.id})">×</button>
+                    </div>
+                </div>
+                <div class="scaling-controls">
+                    Scale: 
+                    <button class="btn-scale ${r.currentScale===1?'active-scale':''}" onclick="setScale(${r.id}, 1)">1x</button>
+                    <button class="btn-scale ${r.currentScale===2?'active-scale':''}" onclick="setScale(${r.id}, 2)">2x</button>
+                    <button class="btn-scale ${r.currentScale===4?'active-scale':''}" onclick="setScale(${r.id}, 4)">4x</button>
+                </div>
+                <div class="instructions-panel" id="instr-${r.id}">
+                    <p style="white-space: pre-wrap;">${r.howTo}</p>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('shoppingList').innerHTML = groceryList.map(ing => `
+            <div class="grocery-item">
+                <div><input type="checkbox"> ${ing.item} <span class="tag">${ing.aisle}</span></div>
+                <button class="btn-delete" onclick="removeGroceryItem(${ing.id})">×</button>
+            </div>
+        `).join('');
+    }
+    function toggleInstr(id) {
+        const el = document.getElementById(`instr-${id}`);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+    render();
+</script>
+</body>
+</html>
