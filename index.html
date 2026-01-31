@@ -1,81 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Digital Cookbook</title>
+    <title>Recipe Fix</title>
     <style>
-        :root { --primary: #2ecc71; --dark: #2c3e50; --gray: #f4f7f6; --danger: #e74c3c; --info: #3498db; --warning: #f39c12; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gray); color: var(--dark); padding-bottom: 50px; }
-        .container { width: 95%; max-width: 600px; margin: 20px auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-scale { background: #eee; color: #444; padding: 5px 10px; font-size: 0.8rem; margin: 2px; }
-        .active-scale { background: var(--info); color: white; }
-        .recipe-item { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--primary); }
-        .recipe-header { display: flex; justify-content: space-between; align-items: center; }
-        .instructions-panel { display: none; margin-top: 15px; padding: 10px; background: #fffdf2; border-radius: 4px; border-top: 1px dashed #ddd; }
-        .grocery-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .tag { font-size: 0.7em; background: #e8f5e9; color: #2e7d32; padding: 3px 8px; border-radius: 12px; }
+        body { font-family: sans-serif; padding: 20px; background: #eee; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, textarea { width: 100%; margin: 5px 0 15px 0; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+        button { width: 100%; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .recipe { border-bottom: 1px solid #ddd; padding: 10px 0; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
-        <h2 id="formTitle">📝 New Recipe</h2>
-        <input type="hidden" id="editId">
-        <input type="text" id="recipeName" placeholder="Recipe Name">
-        <textarea id="ingredientsInput" rows="3" placeholder="Ingredients (e.g. 1/2 cup Sugar, Pantry)"></textarea>
-        <textarea id="howToInput" rows="2" placeholder="Instructions..."></textarea>
-        <button id="saveBtn" style="width: 100%" onclick="saveRecipe()">Save Recipe</button>
-        <button id="cancelBtn" style="width: 100%; background: #95a5a6; margin-top: 5px; display: none;" onclick="cancelEdit()">Cancel Edit</button>
-    </div>
+<div class="card">
+    <h2>Add Recipe</h2>
+    <input type="text" id="name" placeholder="Recipe Name (Required)">
+    <textarea id="ings" placeholder="Ingredients (e.g. 1 cup Milk)"></textarea>
+    <textarea id="steps" placeholder="Instructions..."></textarea>
+    <button onclick="save()">Save Recipe</button>
+</div>
 
-    <div class="card">
-        <h2>👨‍🍳 My Cookbook</h2>
-        <input type="text" id="searchInput" placeholder="🔍 Search recipes..." onkeyup="render()" style="border: 2px solid var(--primary); margin-bottom: 10px;">
-        <button style="background: var(--info); width: 100%; margin-bottom: 10px;" onclick="pickRandom()">🎲 Random Dinner Picker</button>
-        <div id="recipeList"></div>
-    </div>
-
-    <div class="card">
-        <h2>🛒 Shopping List</h2>
-        <div id="shoppingList"></div>
-        <button style="width: 100%; background: #95a5a6; margin-top: 10px;" onclick="clearGroceryList()">Clear All</button>
-    </div>
+<div class="card">
+    <h2>My Recipes</h2>
+    <div id="list"></div>
 </div>
 
 <script>
-    let recipes = JSON.parse(localStorage.getItem('myRecipes')) || [];
-    let groceryList = JSON.parse(localStorage.getItem('myGroceries')) || [];
-
-    // Math Helpers
-    function parseNumeric(val) {
-        if (!val) return 0;
-        if (val.includes('/')) {
-            const [num, den] = val.split('/');
-            return parseFloat(num) / parseFloat(den);
-        }
-        return parseFloat(val);
+    // Load data
+    let recipes = [];
+    try {
+        const saved = localStorage.getItem('myRecipes');
+        if (saved) recipes = JSON.parse(saved);
+    } catch (e) {
+        console.error("Error loading recipes", e);
     }
 
-    function scaleIngredient(text, factor) {
-        const regex = /((?:\d+\/\d+|\d+(?:\.\d+)?))\s*(tsp|tbsp|cup|cups|oz|lb|lbs|g|ml)\b/gi;
-        return text.replace(regex, (match, val, unit) => {
-            let total = parseNumeric(val) * factor;
-            unit = unit.toLowerCase();
-            if (unit === "tsp" && total >= 3) { total /= 3; unit = "tbsp"; }
-            if (unit === "tbsp" && total >= 16) { total /= 16; unit = (total === 1) ? "cup" : "cups"; }
-            if (unit === "oz" && total >= 16) { total /= 16; unit = (total === 1) ? "lb" : "lbs"; }
-            return `${+total.toFixed(2)} ${unit}`;
+    function save() {
+        const nameInput = document.getElementById('name');
+        const ingsInput = document.getElementById('ings');
+        const stepsInput = document.getElementById('steps');
+
+        if (!nameInput.value) {
+            alert("Please enter a name!");
+            return;
+        }
+
+        const newRecipe = {
+            id: Date.now(),
+            name: nameInput.value,
+            ingredients: ingsInput.value,
+            instructions: stepsInput.value
+        };
+
+        try {
+            recipes.push(newRecipe);
+            localStorage.setItem('myRecipes', JSON.stringify(recipes));
+            
+            // Clear inputs
+            nameInput.value = '';
+            ingsInput.value = '';
+            stepsInput.value = '';
+            
+            render();
+            alert("Saved successfully!");
+        } catch (err) {
+            alert("Save failed: " + err);
+        }
+    }
+
+    function deleteRec(id) {
+        recipes = recipes.filter(r => r.id !== id);
+        localStorage.setItem('myRecipes', JSON.stringify(recipes));
+        render();
+    }
+
+    function render() {
+        const container = document.getElementById('list');
+        container.innerHTML = '';
+        recipes.forEach(r => {
+            container.innerHTML += `
+                <div class="recipe">
+                    <strong>${r.name}</strong><br>
+                    <small>${r.ingredients.substring(0, 30)}...</small>
+                    <button style="background:red; width:auto; padding: 2px 8px; margin-left: 10px;" onclick="deleteRec(${r.id})">Delete</button>
+                </div>
+            `;
         });
     }
 
-    // Core Logic
-    function saveRecipe() {
-        const name = document.getElementById('recipeName').value;
-        const rawIngs = document.getElementById('ingredientsInput').value.split('\n');
-        const howTo = document.getElementById('howToInput').value;
-        const editId = document.getElementById('editId').value;
+    render();
+</script>
+</body>
+</html>
